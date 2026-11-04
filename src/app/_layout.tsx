@@ -13,6 +13,21 @@ export default function RootLayout() {
                 options={{ headerShown: false }}
             />
             <Stack.Screen
+                name="register"
+                options={{
+                    headerShown: true,
+                    title: "Crear Cuenta",
+                    headerStyle: {
+                        backgroundColor: "#FFFFFF",
+                    },
+                    headerTitleStyle: {
+                        fontWeight: "600",
+                    },
+                    headerTintColor: "#111827",
+                    headerBackTitle: "Volver",
+                }}
+            />
+            <Stack.Screen
                 name="(tabs)"
                 options={{ headerShown: false }}
             />

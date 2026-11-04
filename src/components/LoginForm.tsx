@@ -1,6 +1,7 @@
 import { LoginFormProps } from "@/interfaces/auth.interface";
 import { useState, useEffect, useRef } from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Button, StyleSheet, Text, TextInput, View, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 
 export default function LoginForm({
     onLogin,
@@ -10,6 +11,7 @@ export default function LoginForm({
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const mountedRef = useRef(true);
+    const router = useRouter();
 
     useEffect(() => {
         return () => {
@@ -27,10 +29,11 @@ export default function LoginForm({
 
             <TextInput
                 style={styles.input}
-                placeholder="Usuario"
+                placeholder="Correo electrónico o usuario"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
+                keyboardType="email-address"
             />
 
             <TextInput
@@ -50,6 +53,15 @@ export default function LoginForm({
                 onPress={handleLogin}
                 disabled={loading}
             />
+
+            <TouchableOpacity 
+                style={styles.registerLink}
+                onPress={() => router.push('/register' as any)}
+            >
+                <Text style={styles.registerText}>
+                    ¿No tienes cuenta? <Text style={styles.registerHighlight}>Regístrate aquí</Text>
+                </Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -64,6 +76,7 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         textAlign: "center",
         marginBottom: 30,
+        color: "#111827",
     },
     input: {
         borderWidth: 1,
@@ -71,10 +84,24 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 12,
         marginBottom: 15,
+        backgroundColor: "#FFFFFF",
     },
     error: {
         color: "red",
         marginBottom: 15,
         textAlign: "center",
+    },
+    registerLink: {
+        marginTop: 20,
+        alignItems: "center",
+        padding: 8,
+    },
+    registerText: {
+        fontSize: 15,
+        color: "#4B5563",
+    },
+    registerHighlight: {
+        color: "#3B82F6",
+        fontWeight: "600",
     },
 });

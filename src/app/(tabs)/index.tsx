@@ -1,14 +1,16 @@
 /**
  * Pantalla de inicio (Home)
- * Muestra un mensaje de bienvenida al usuario
+ * Muestra un mensaje de bienvenida al usuario con navegación a pestañas
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const router = useRouter();
 
   return (
     <ScrollView style={styles.container}>
@@ -24,35 +26,47 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Acciones rápidas</Text>
           
-          <View style={styles.actionCard}>
-            <Text style={styles.actionIcon}>📝</Text>
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/(tabs)/students' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.actionIcon}>👥</Text>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Ver estudiantes</Text>
               <Text style={styles.actionDescription}>
-                Administra la lista de estudiantes
+                Administra la lista de estudiantes registrados
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          <View style={styles.actionCard}>
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/register' as any)}
+            activeOpacity={0.7}
+          >
             <Text style={styles.actionIcon}>➕</Text>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Agregar estudiante</Text>
               <Text style={styles.actionDescription}>
-                Registra un nuevo estudiante
+                Registra un nuevo alumno en la base de datos
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          <View style={styles.actionCard}>
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/(tabs)/profile' as any)}
+            activeOpacity={0.7}
+          >
             <Text style={styles.actionIcon}>👤</Text>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Mi perfil</Text>
               <Text style={styles.actionDescription}>
-                Ver y editar tu información
+                Ver detalles y cerrar sesión
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
