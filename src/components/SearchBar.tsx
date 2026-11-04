@@ -21,7 +21,7 @@ export default function SearchBar({
   debounceMs = 300
 }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLocalValue(value);

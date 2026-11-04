@@ -24,14 +24,14 @@ export default function LoginScreen() {
         const token = await getAccessToken();
         if (token) {
             // Si hay token, ir a tabs
-            router.replace("/home" as any);
+            router.replace("/(tabs)" as any);
         }
     };
 
     const handleLogin = async (data: LoginRequest) => {
         const success = await login(data);
         if (success) {
-            router.replace("/home" as any);
+            router.replace("/(tabs)" as any);
         }
     };
 

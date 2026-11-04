@@ -1,3 +1,4 @@
+import { saveAccessToken, saveRefreshToken } from '@/utils/storage';
 import { API_URL } from "@/constants/api";
 import { LoginRequest, LoginResponse } from "@/interfaces/auth.interface";
 
@@ -25,9 +26,8 @@ export const loginService = async(data: LoginRequest):Promise<LoginResponse> => 
     }
 
 
-    return {
-        success: true,
-        message: "Login correcto"
-    }
+    if (result.accessToken || result.token) { await saveAccessToken(result.accessToken || result.token); }
+    if (result.refreshToken) { await saveRefreshToken(result.refreshToken); }
+    return { success: true, message: "Login correcto" };
 
 }

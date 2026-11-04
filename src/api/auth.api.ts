@@ -36,8 +36,13 @@ export interface RefreshTokenResponse {
  * Retorna el token, refresh token y datos del usuario
  */
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const response = await apiClient.post<LoginResponse>('/api/auth/login', data);
-  return response.data;
+  const response = await apiClient.post<any>('/api/auth/login', data);
+  const d = response.data;
+  return {
+    token: d.token || d.accessToken,
+    refreshToken: d.refreshToken,
+    user: d.user,
+  };
 }
 
 /**
@@ -53,8 +58,8 @@ export async function register(data: RegisterRequest): Promise<{ user: User }> {
  * Requiere token de autenticación
  */
 export async function getCurrentUser(): Promise<User> {
-  const response = await apiClient.get<UserMeResponse>('/api/auth/me');
-  return response.data.user;
+  const response = await apiClient.get<any>('/api/auth/me');
+  return response.data.data || response.data.user;
 }
 
 /**
