@@ -13,8 +13,12 @@ export default function HomeScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.innerContainer}>
         <View style={styles.welcomeCard}>
           <Text style={styles.emoji}>👋</Text>
           <Text style={styles.welcomeTitle}>¡Bienvenido!</Text>
@@ -47,9 +51,9 @@ export default function HomeScreen() {
           >
             <Text style={styles.actionIcon}>➕</Text>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Agregar estudiante</Text>
+              <Text style={styles.actionTitle}>Registrar usuario</Text>
               <Text style={styles.actionDescription}>
-                Registra un nuevo alumno en la base de datos
+                Registra un nuevo usuario en la base de datos
               </Text>
             </View>
           </TouchableOpacity>
@@ -63,7 +67,7 @@ export default function HomeScreen() {
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Mi perfil</Text>
               <Text style={styles.actionDescription}>
-                Ver detalles y cerrar sesión
+                Ver detalles de cuenta y cerrar sesión
               </Text>
             </View>
           </TouchableOpacity>
@@ -78,8 +82,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F7FA',
   },
-  content: {
+  scrollContent: {
     padding: 20,
+    paddingBottom: 110, // Margen para que el TabBar inferior nunca tape el contenido
+    alignItems: 'center',
+  },
+  innerContainer: {
+    width: '100%',
+    maxWidth: 700,
   },
   welcomeCard: {
     backgroundColor: '#FFFFFF',

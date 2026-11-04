@@ -11,7 +11,7 @@
 
 La rama `dev-clase-4` introduce una arquitectura completa con navegación por pestañas (`(tabs)`), componentes de búsqueda con debounce (`SearchBar.tsx`), manejo de estado global con `AuthContext.tsx`, `ErrorBoundary.tsx` y gestión de estudiantes (`studentService.ts`, `StudentList.tsx`, `StudentForm.tsx`).
 
-Durante la revisión y prueba de compilación se identificaron y solucionaron **7 errores críticos de integración, tipado y ejecución**.
+Durante la revisión y prueba de integración se identificaron y solucionaron **11 errores críticos de integración, compatibilidad multiplataforma (Web / Móvil), tipado, navegación y diseño responsivo**.
 
 ---
 
@@ -68,7 +68,7 @@ Durante la revisión y prueba de compilación se identificaron y solucionaron **
 
 ### 5. `src/services/auth.service.tsx` e `index.tsx` — Persistencia y Enrutamiento a Tabs
 * **Error:**
-  - `loginService` validaba credenciales pero no persistía los tokens en `SecureStore`.
+  - `loginService` validaba credenciales pero no persistía los tokens en `storage`.
   - En `index.tsx`, tras iniciar sesión se llamaba a `router.replace("/home")`, pero `home` ya no es la ruta principal en el nuevo esquema de pestañas.
 * **Solución:**
   - Se añadieron `saveAccessToken` y `saveRefreshToken` en `auth.service.tsx`.
@@ -83,8 +83,44 @@ Durante la revisión y prueba de compilación se identificaron y solucionaron **
 ---
 
 ### 7. `expo-env.d.ts` — Tipado de estilos CSS y CSS Modules
-* **Error:** TS2307 por falta de tipos para `*.module.css` y `@/global.css`.
+* **Error:** `TS2307: Cannot find module './animated-icon.module.css'` por falta de tipos para `*.module.css` y `@/global.css`.
 * **Solución:** Declaración global de módulos CSS en `expo-env.d.ts`.
+
+---
+
+### 8. `src/utils/storage.ts` — Fallo en Navegadores Web (`getValueWithKeyAsync is not a function`)
+* **Error:** En Expo Web, `SecureStore.getItemAsync` lanzaba:
+  `Uncaught Error: ExpoSecureStore.default.getValueWithKeyAsync is not a function`.
+* **Causa:** `expo-secure-store` es un módulo nativo para iOS y Android (KeyStore/Keychain) que no dispone de métodos nativos en navegadores.
+* **Solución:** Se implementó compatibilidad multiplataforma en `src/utils/storage.ts` detectando `Platform.OS === 'web'`:
+  - En **Web**: Utiliza `window.localStorage`.
+  - En **Móvil (Android / iOS)**: Utiliza `SecureStore` con cifrado nativo.
+
+---
+
+### 9. Restauración del Flujo de Registro (`src/app/register.tsx`)
+* **Situación:** En `dev-clase-4` el profesor no incluyó la pantalla de registro, dejando `LoginForm.tsx` sin enlace para crear cuentas nuevas.
+* **Solución:**
+  - Se restauró `src/app/register.tsx` compatible con la arquitectura actual (`api/auth.api`, `AuthContext`).
+  - Se registró en el Stack de `src/app/_layout.tsx`.
+  - Se agregó enlace interactivo *"¿No tienes cuenta? Regístrate aquí"* en `LoginForm.tsx`.
+
+---
+
+### 10. `src/app/(tabs)/index.tsx` — Dashboard interactivo con Acciones Rápidas
+* **Problema:** Las tarjetas de bienvenida ("Ver estudiantes", "Registrar usuario", "Mi perfil") eran estáticas o no navegaban a las rutas correspondientes.
+* **Solución:** Se convirtieron en componentes `TouchableOpacity` con llamadas a `router.push()`, enlazando a `/(tabs)/students`, `/register` y `/(tabs)/profile`.
+
+---
+
+### 11. `src/app/(tabs)/profile.tsx` y `students.tsx` — Contenido cortado por el TabBar ("No se ven las acciones")
+* **Error reportado:** Al ingresar a la pestaña *Perfil*, la sección inferior *"Acciones"* (Configuración, Notificaciones, Ayuda) y el botón *"Cerrar sesión"* quedaban fuera de la pantalla o tapados por la barra de navegación inferior (`TabBar`).
+* **Causa:** La pantalla utilizaba un `<View style={styles.container}>` estático (no deslizable) y el botón de logout usaba `marginTop: 'auto'`. En ventanas de navegador o pantallas estándar, la altura del contenido superaba la ventana visible y al no ser un `ScrollView`, el usuario no podía bajar.
+* **Solución:**
+  - Se reemplazó el contenedor raíz por `<ScrollView>` con `contentContainerStyle` configurado con `paddingBottom: 110`.
+  - Se agregaron flechas indicadoras (`›`) a los elementos de acción.
+  - Se implementó manejo compatible de alertas y confirmación de logout (`window.confirm` / `alert` en Web, `Alert.alert` en Android/iOS).
+  - Se añadió también `paddingBottom: 110` en `students.tsx` y en `index.tsx` para garantizar que ninguna tarjeta inferior quede tapada por el menú en ninguna pantalla.
 
 ---
 

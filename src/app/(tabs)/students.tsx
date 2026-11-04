@@ -85,7 +85,10 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingBottom: 20,
+    paddingBottom: 110, // Margen para que el último estudiante no quede oculto detrás del TabBar
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   emptyContainer: {
     flex: 1,
