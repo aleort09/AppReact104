@@ -1,5 +1,5 @@
 /**
- * Servicio de estudiantes con cache LRU
+ * Servicio de estudiantes con cache LRU y fallback resiliente de búsqueda
  */
 
 import apiClient from '../api/client';
@@ -42,8 +42,8 @@ class StudentService {
       return this.cache.get(cacheKey)!.data;
     }
 
-    const response = await apiClient.get<{ data: Student[] }>(this.baseUrl);
-    const students = response.data.data;
+    const response = await apiClient.get<any>(this.baseUrl);
+    const students: Student[] = response.data?.data || response.data || [];
     
     this.setCache(cacheKey, students);
     
@@ -57,8 +57,8 @@ class StudentService {
       return this.cache.get(cacheKey)!.data;
     }
 
-    const response = await apiClient.get<{ data: Student }>(`${this.baseUrl}/${id}`);
-    const student = response.data.data;
+    const response = await apiClient.get<any>(`${this.baseUrl}/${id}`);
+    const student: Student = response.data?.data || response.data;
     
     this.setCache(cacheKey, student);
     
@@ -66,8 +66,8 @@ class StudentService {
   }
 
   async create(student: Omit<Student, 'id' | 'created_at' | 'updated_at'>): Promise<Student> {
-    const response = await apiClient.post<{ data: Student }>(this.baseUrl, student);
-    const newStudent = response.data.data;
+    const response = await apiClient.post<any>(this.baseUrl, student);
+    const newStudent: Student = response.data?.data || response.data;
     
     this.cache.clear();
     
@@ -75,8 +75,8 @@ class StudentService {
   }
 
   async update(id: number, student: Partial<Student>): Promise<Student> {
-    const response = await apiClient.put<{ data: Student }>(`${this.baseUrl}/${id}`, student);
-    const updatedStudent = response.data.data;
+    const response = await apiClient.put<any>(`${this.baseUrl}/${id}`, student);
+    const updatedStudent: Student = response.data?.data || response.data;
     
     this.cache.delete(`student-${id}`);
     this.cache.delete('all-students');
@@ -92,10 +92,22 @@ class StudentService {
   }
 
   async search(query: string): Promise<Student[]> {
-    const response = await apiClient.get<{ data: Student[] }>(`${this.baseUrl}/search`, {
-      params: { q: query }
-    });
-    return response.data.data;
+    try {
+      const response = await apiClient.get<any>(`${this.baseUrl}/search`, {
+        params: { q: query }
+      });
+      return response.data?.data || response.data || [];
+    } catch {
+      // Fallback a filtrado en cliente si el backend no tiene ruta dedicada /search
+      const all = await this.getAll();
+      const q = query.toLowerCase();
+      return all.filter(s =>
+        (s.nombre && s.nombre.toLowerCase().includes(q)) ||
+        (s.apellido && s.apellido.toLowerCase().includes(q)) ||
+        (s.matricula && s.matricula.toLowerCase().includes(q)) ||
+        (s.email && s.email.toLowerCase().includes(q))
+      );
+    }
   }
 }
 

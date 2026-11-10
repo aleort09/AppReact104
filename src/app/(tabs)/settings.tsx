@@ -1,5 +1,6 @@
 /**
  * Pantalla de ajustes
+ * Permite cambiar el tema (claro/oscuro) y probar el sistema de notificaciones toast
  */
 
 import React from 'react';
@@ -12,9 +13,14 @@ export default function SettingsScreen() {
   const { showSuccess, showError, showWarning, showInfo } = useNotification();
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.content}>
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
+        {/* APARIENCIA / TEMA */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Apariencia
           </Text>
@@ -32,68 +38,74 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
+        {/* NOTIFICACIONES */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Notificaciones
+            Sistema de Notificaciones
           </Text>
 
           <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => showSuccess('Exito', 'Operacion completada correctamente')}
+            style={[styles.notificationButton, { borderBottomColor: colors.border }]}
+            onPress={() => showSuccess('Éxito', 'Operación completada correctamente')}
+            activeOpacity={0.7}
           >
             <Text style={[styles.notificationButtonText, { color: '#10B981' }]}>
-              Mostrar Exito
+              🟢 Mostrar Notificación de Éxito
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => showError('Error', 'Algo salio mal')}
+            style={[styles.notificationButton, { borderBottomColor: colors.border }]}
+            onPress={() => showError('Error', 'No se pudo conectar al servidor escolar')}
+            activeOpacity={0.7}
           >
             <Text style={[styles.notificationButtonText, { color: '#EF4444' }]}>
-              Mostrar Error
+              🔴 Mostrar Notificación de Error
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => showWarning('Advertencia', 'Accion requerida')}
+            style={[styles.notificationButton, { borderBottomColor: colors.border }]}
+            onPress={() => showWarning('Advertencia', 'Tu sesión expirará en 5 minutos')}
+            activeOpacity={0.7}
           >
             <Text style={[styles.notificationButtonText, { color: '#F59E0B' }]}>
-              Mostrar Advertencia
+              🟡 Mostrar Notificación de Advertencia
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => showInfo('Informacion', 'Datos actualizados')}
+            style={[styles.notificationButton, { borderBottomWidth: 0 }]}
+            onPress={() => showInfo('Información', 'Datos escolares sincronizados')}
+            activeOpacity={0.7}
           >
             <Text style={[styles.notificationButtonText, { color: '#3B82F6' }]}>
-              Mostrar Informacion
+              🔵 Mostrar Notificación Informativa
             </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
+        {/* ACERCA DE */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Acerca de
+            Acerca del sistema
           </Text>
 
-          <View style={styles.aboutItem}>
+          <View style={[styles.aboutItem, { borderBottomColor: colors.border }]}>
             <Text style={[styles.aboutLabel, { color: colors.secondary }]}>
-              Version
+              Versión
             </Text>
             <Text style={[styles.aboutValue, { color: colors.text }]}>
-              1.0.0
+              2.0.0 (Clase 2 & Contexts)
             </Text>
           </View>
 
           <View style={styles.aboutItem}>
             <Text style={[styles.aboutLabel, { color: colors.secondary }]}>
-              Build
+              Estado
             </Text>
-            <Text style={[styles.aboutValue, { color: colors.text }]}>
-              2026.10.14
+            <Text style={[styles.aboutValue, { color: '#10B981' }]}>
+              En línea
             </Text>
           </View>
         </View>
@@ -106,18 +118,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollContent: {
     padding: 20,
+    paddingBottom: 110,
+    alignItems: 'center',
+  },
+  content: {
+    width: '100%',
+    maxWidth: 600,
   },
   section: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 14,
+    padding: 18,
     marginBottom: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   settingItem: {
     flexDirection: 'row',
@@ -127,26 +151,27 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
+    fontWeight: '500',
   },
   notificationButton: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   notificationButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
   },
   aboutItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
   },
   aboutLabel: {
-    fontSize: 16,
+    fontSize: 15,
   },
   aboutValue: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

@@ -1,9 +1,9 @@
 /**
- * Pantalla de registro
+ * Pantalla de registro de usuario
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
@@ -32,8 +32,10 @@ export default function RegisterScreen() {
 
     const success = await register(email, password);
     if (success) {
-      showSuccess('Exito', 'Cuenta creada correctamente');
-      router.replace('/(tabs)');
+      showSuccess('Éxito', 'Cuenta creada correctamente');
+      router.replace('/(tabs)' as any);
+    } else {
+      showError('Error al registrar', 'No se pudo crear la cuenta');
     }
   };
 
@@ -54,7 +56,7 @@ export default function RegisterScreen() {
 
         <TextInput
           style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder="Password"
+          placeholder="Contraseña"
           placeholderTextColor={colors.secondary}
           value={password}
           onChangeText={setPassword}
@@ -63,7 +65,7 @@ export default function RegisterScreen() {
 
         <TextInput
           style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder="Confirmar password"
+          placeholder="Confirmar contraseña"
           placeholderTextColor={colors.secondary}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -74,15 +76,16 @@ export default function RegisterScreen() {
           style={[styles.button, { backgroundColor: colors.primary }]}
           onPress={handleRegister}
           disabled={loading}
+          activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>
             {loading ? 'Creando...' : 'Crear cuenta'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/login')}>
+        <TouchableOpacity onPress={() => router.push('/login' as any)}>
           <Text style={[styles.link, { color: colors.primary }]}>
-            ¿Ya tienes cuenta? Inicia sesion
+            ¿Ya tienes cuenta? Inicia sesión aquí
           </Text>
         </TouchableOpacity>
       </View>
@@ -94,7 +97,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   title: {
     fontSize: 28,
@@ -105,7 +108,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     marginBottom: 15,
     fontSize: 16,
   },

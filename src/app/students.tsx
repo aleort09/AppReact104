@@ -1,21 +1,23 @@
 /**
- * Pantalla de lista de estudiantes
+ * Pantalla de lista de estudiantes (Ruta raíz /students)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, RefreshControl, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStudents } from '../hooks/useStudents';
+import { useTheme } from '../context/ThemeContext';
 import StudentList from '../components/StudentList';
 import { ErrorMessage, Loading } from '../components';
 
 export default function StudentsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { students, loading, error, refresh } = useStudents();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleStudentPress = (student: any) => {
-    router.push(`/student/${student.id}`);
+    router.push(`/student/${student.id}` as any);
   };
 
   const onRefresh = useCallback(async () => {
@@ -33,7 +35,7 @@ export default function StudentsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StudentList 
         students={students} 
         onStudentPress={handleStudentPress}
@@ -47,6 +49,5 @@ export default function StudentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
   },
 });

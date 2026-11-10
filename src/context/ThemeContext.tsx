@@ -1,10 +1,11 @@
 /**
- * Context para manejo de tema de la aplicacion
+ * Context para manejo de tema de la aplicación (Claro / Oscuro)
+ * Soporta persistencia con AsyncStorage y detección del tema del sistema
  */
 
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 
 type Theme = 'light' | 'dark';
 
@@ -64,10 +65,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const loadTheme = async () => {
     try {
-      const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      let savedTheme: string | null = null;
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+      } else {
+        savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      }
+
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-        setTheme(savedTheme);
-      } else if (systemColorScheme) {
+        setTheme(savedTheme as Theme);
+      } else if (systemColorScheme === 'dark' || systemColorScheme === 'light') {
         setTheme(systemColorScheme);
       }
     } catch (error) {
@@ -77,7 +84,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const saveTheme = async (newTheme: Theme) => {
     try {
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+      } else {
+        await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
+      }
     } catch (error) {
       console.error('Error saving theme:', error);
     }

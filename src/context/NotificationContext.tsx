@@ -1,5 +1,5 @@
 /**
- * Context para sistema de notificaciones toast
+ * Context para sistema de notificaciones toast y push en la app
  */
 
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
@@ -31,7 +31,7 @@ interface NotificationProviderProps {
   maxNotifications?: number;
 }
 
-const DEFAULT_DURATION = 3000;
+const DEFAULT_DURATION = 3500;
 const MAX_NOTIFICATIONS = 5;
 
 export function NotificationProvider({ 
@@ -40,18 +40,27 @@ export function NotificationProvider({
 }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  const dismiss = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const dismissAll = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   const generateId = () => {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
 
   const show = useCallback((type: NotificationType, title: string, message?: string, duration?: number) => {
     const id = generateId();
+    const effectiveDuration = duration !== undefined ? duration : DEFAULT_DURATION;
     const notification: Notification = {
       id,
       type,
       title,
       message,
-      duration: duration || DEFAULT_DURATION,
+      duration: effectiveDuration,
     };
 
     setNotifications(prev => {
@@ -59,12 +68,12 @@ export function NotificationProvider({
       return updated.slice(-maxNotifications);
     });
 
-    if (duration !== 0) {
+    if (effectiveDuration > 0) {
       setTimeout(() => {
         dismiss(id);
-      }, duration || DEFAULT_DURATION);
+      }, effectiveDuration);
     }
-  }, [maxNotifications]);
+  }, [maxNotifications, dismiss]);
 
   const showSuccess = useCallback((title: string, message?: string, duration?: number) => {
     show('success', title, message, duration);
@@ -81,14 +90,6 @@ export function NotificationProvider({
   const showInfo = useCallback((title: string, message?: string, duration?: number) => {
     show('info', title, message, duration);
   }, [show]);
-
-  const dismiss = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  }, []);
-
-  const dismissAll = useCallback(() => {
-    setNotifications([]);
-  }, []);
 
   const value = useMemo<NotificationContextType>(() => ({
     notifications,

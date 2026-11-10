@@ -1,58 +1,71 @@
-import {
-    StyleSheet,
-    View
-} from "react-native";
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import LoginForm from '../components/LoginForm';
+import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../context/ThemeContext';
+import { useNotification } from '../context/NotificationContext';
+import { getAccessToken } from '../utils/storage';
 
-import { useRouter } from "expo-router";
-import LoginForm from "../components/LoginForm";
-import { useLogin } from "../hooks/useLogin";
-import { LoginRequest } from "../interfaces/auth.interface";
+export default function SplashScreen() {
+  const router = useRouter();
+  const { login, loading, error, isAuthenticated } = useAuth();
+  const { colors } = useTheme();
+  const { showSuccess, showError } = useNotification();
 
-export default function LoginScreen() {
-    const router = useRouter();
-    const {
-        login,
-        loading,
-        error
-    } = useLogin();
+  useEffect(() => {
+    checkInitialSession();
+  }, []);
 
-    const handleLogin = async (
-        data: LoginRequest
-    ) => {
+  const checkInitialSession = async () => {
+    const token = await getAccessToken();
+    if (token) {
+      router.replace('/(tabs)' as any);
+    }
+  };
 
-        const success = await login(
-            data
-        );
+  const handleLogin = async (email: string, password: string) => {
+    const success = await login(email, password);
+    if (success) {
+      showSuccess('Bienvenido', 'Has iniciado sesión correctamente');
+      router.replace('/(tabs)' as any);
+    } else {
+      showError('Error', 'Credenciales incorrectas');
+    }
+  };
 
-        if (success) {
-            router.replace("/home");
-        }
-    };
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LoginForm
+        onLogin={handleLogin}
+        loading={loading}
+        error={error?.message || ''}
+      />
 
-    return (
-        <View style={styles.container}>
-            <LoginForm
-                 onLogin={(
-                    email,
-                    password
-                ) =>
-                    handleLogin({
-                        email,
-                        password 
-                    })
-                }
-                loading={loading}
-                error={error}
-            />
-        </View>
-    );
+      <TouchableOpacity 
+        style={styles.registerLink}
+        onPress={() => router.push('/register' as any)}
+      >
+        <Text style={[styles.linkText, { color: colors.primary }]}>
+          ¿No tienes cuenta? Regístrate aquí
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-    },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  registerLink: {
+    marginTop: 20,
+  },
+  linkText: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
 });

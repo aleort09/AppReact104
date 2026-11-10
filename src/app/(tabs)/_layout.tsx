@@ -1,9 +1,10 @@
 /**
- * Layout de tabs con navegacion inferior
+ * Layout de tabs con navegación inferior
  */
 
+import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, ColorValue } from 'react-native';
 import { useCart } from '../../context/CartContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -92,21 +93,21 @@ export default function TabLayout() {
 
 interface TabIconProps {
   name: 'home' | 'people' | 'person' | 'settings';
-  color: string;
+  color: ColorValue | string;
   size: number;
 }
 
 function TabIcon({ name, color, size }: TabIconProps) {
   const icons = {
-    home: 'H',
-    people: 'P',
-    person: 'U',
-    settings: 'S',
+    home: '🏠',
+    people: '👥',
+    person: '👤',
+    settings: '⚙️',
   };
 
   return (
     <View style={styles.iconContainer}>
-      <Text style={[styles.iconText, { color, fontSize: size }]}>
+      <Text style={[styles.iconText, { fontSize: size || 22 }]}>
         {icons[name]}
       </Text>
     </View>
@@ -119,6 +120,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconText: {
-    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

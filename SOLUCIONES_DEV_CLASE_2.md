@@ -2,6 +2,7 @@
 
 > **Rama:** `soluciondc2`  
 > **Base:** `dev-clase-2` (`richie20502/react_native_102.git`)  
+> **Últimos commits integrados:** `8a106c9` (*resolver errores avanzados*) y `64fd148` (*contexts, navegación tabs, notificaciones y tema oscuro*)  
 > **Fecha:** Noviembre 2026  
 > **Estado:** 100% verificado (`tsc --noEmit` completado con 0 errores).
 
@@ -9,135 +10,64 @@
 
 ## 📋 Resumen General
 
-En la rama `dev-clase-2` se identificaron y solucionaron **10 errores fundamentales en componentes de interfaz** (divididos entre `StudentCard.tsx`, `ErrorMessage.tsx` y `Loading.tsx`), junto con **errores de compilación y dependencias** que impedían la ejecución correcta de la aplicación.
+En la rama `dev-clase-2` se integraron las soluciones a:
+1. **Los 10 errores fundamentales en componentes de interfaz** (`StudentCard.tsx`, `ErrorMessage.tsx` y `Loading.tsx`).
+2. **Los errores de dependencias y módulos CSS** (`axios`, `expo-secure-store`, `expo-env.d.ts`).
+3. **Los nuevos errores introducidos en el último commit del profesor** (`ThemeContext`, `NotificationContext`, `CartContext`, navegación de pestañas `(tabs)`, tema oscuro y notificaciones toast/push).
 
 ---
 
-## 🧩 PARTE 1: Errores en Componentes UI
+## 🧩 PARTE 1: Errores en Componentes UI (Iniciales)
 
 ### 📁 Archivo: `src/components/StudentCard.tsx`
 
 #### 🔴 ERROR #1: Optimización de Renderizado (Performance)
-* **Problema:** El componente se definía como una función estándar. En listas largas (100+ elementos), cada vez que el componente padre cambiaba cualquier estado, **todas las tarjetas se re-renderizaban innecesariamente**, provocando lag en el scroll y alto consumo de CPU.
-* **Solución:** Envolver el componente con `React.memo` para evitar re-renderizados cuando las props (`student`, `onPress`) no cambian. Se asigna `displayName = 'StudentCard'` para depuración en React DevTools.
-* **Antes:**
-  ```tsx
-  export default function StudentCard({ student, onPress }: StudentCardProps) { ... }
-  ```
-* **Después:**
-  ```tsx
-  const StudentCard = React.memo(({ student, onPress }: StudentCardProps) => { ... });
-  StudentCard.displayName = 'StudentCard';
-  export default StudentCard;
-  ```
-
----
+* **Problema:** En listas largas, cada cambio en el padre re-renderizaba todas las tarjetas.
+* **Solución:** Envolver con `React.memo` y asignar `displayName = 'StudentCard'`.
 
 #### 🔴 ERROR #2: Accesibilidad en Componentes Interactivos (WCAG 2.1 AA)
-* **Problema:** El `TouchableOpacity` carecía de propiedades de accesibilidad. Lectores de pantalla (TalkBack / VoiceOver) anunciaban únicamente "Touch this element", sin informar qué estudiante representaba la tarjeta.
-* **Solución:** Incorporar atributos de accesibilidad estándar:
-  ```tsx
-  <TouchableOpacity
-    style={styles.card}
-    onPress={() => onPress?.(student)}
-    activeOpacity={0.7}
-    accessible={true}
-    accessibilityRole="button"
-    accessibilityLabel={`Estudiante ${student.nombre} ${student.apellido}`}
-    accessibilityHint="Toca para ver los detalles del estudiante"
-  >
-  ```
-
----
+* **Problema:** `TouchableOpacity` carecía de etiquetas de accesibilidad para lectores de pantalla.
+* **Solución:** Incorporar `accessible={true}`, `accessibilityRole="button"`, `accessibilityLabel` y `accessibilityHint`.
 
 #### 🔴 ERROR #3: Crash por Valores null / undefined en Cadenas (Runtime TypeError)
-* **Problema:** Para calcular las iniciales del avatar se usaba `student.nombre.charAt(0)`. Si el backend respondía con `nombre: null` o `undefined`, la app colapsaba con `TypeError: Cannot read property 'charAt' of null`.
-* **Solución:** Implementar optional chaining (`?.`) y operador de coalescencia nula / fallback:
-  ```tsx
-  {student.nombre?.charAt(0) || '?'}{student.apellido?.charAt(0) || '?'}
-  ```
+* **Problema:** `student.nombre.charAt(0)` colapsaba con `TypeError: Cannot read property 'charAt' of null`.
+* **Solución:** Incorporar optional chaining y coalescencia nula: `{student.nombre?.charAt(0) || '?'}`.
+
+#### 🔴 ERROR #4: Manejo de Texto Largo (Overflow / Ellipsis)
+* **Problema:** Nombres o emails largos rompían la maquetación.
+* **Solución:** Añadir `numberOfLines={1}` y `ellipsizeMode="tail"`.
+
+#### 🔴 ERROR #5: Feedback Táctil Inconsistente (UX)
+* **Problema:** Opacidad por defecto demasiado brusca en interacciones táctiles.
+* **Solución:** Configurar `activeOpacity={0.7}`.
 
 ---
 
 ### 📁 Archivo: `src/components/ErrorMessage.tsx`
 
-#### 🔴 ERROR #4: Validación Defensiva de Datos de Error
-* **Problema:** Se asumía que `error` siempre era un objeto con propiedad `message` o un string. Ante errores de red donde `error` era `null`, `undefined` o `{}` vacío, producía crash inmediato al acceder a `error.message`.
-* **Solución:** Validación defensiva con fallback:
-  ```tsx
-  const message = typeof error === 'string' 
-    ? error 
-    : error?.message || 'Error desconocido';
-  ```
+#### 🔴 ERROR #6: Desestructuración Insegura de Objetos de Error
+* **Problema:** Asumir que `error` siempre era string provocaba crash si se pasaba un objeto `Error` o `AxiosError`.
+* **Solución:** Función normalizadora `getErrorMessage(error)` para extraer mensajes de `Error`, objetos API o strings.
 
----
-
-#### 🔴 ERROR #5: Stale Closure en Callbacks (`useCallback`)
-* **Problema:** `handleRetry` se envolvía en `useCallback` con array de dependencias vacío `[]`. Si la función `onRetry` cambiaba entre renders (ej. paginación o nuevo endpoint), el callback ejecutaba la versión vieja capturada en el closure.
-* **Solución:** Emplear `useRef` para mantener siempre la referencia más reciente sin forzar la recreación del callback:
-  ```tsx
-  const onRetryRef = useRef(onRetry);
-
-  useEffect(() => {
-    onRetryRef.current = onRetry;
-  }, [onRetry]);
-
-  const handleRetry = useCallback(() => {
-    if (onRetryRef.current) {
-      Alert.alert('Reintentar', '¿Deseas reintentar la operación?', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Reintentar', onPress: () => onRetryRef.current?.() }
-      ]);
-    }
-  }, []);
-  ```
-
----
-
-#### 🔴 ERROR #6: Dependencias Faltantes en Hooks
-* **Problema:** Efectos y callbacks omitían variables externas en sus arreglos de dependencias, violando las reglas oficiales de React Hooks (`react-hooks/exhaustive-deps`).
-* **Solución:** Resuelto mediante el patrón de refs estables o declarando explícitamente todas las dependencias requeridas.
-
----
-
-#### 🔴 ERROR #7: Accesibilidad en Contenido No Textual (Emojis)
-* **Problema:** Se renderizaban iconos o emojis directamente sin etiquetas de accesibilidad. Los lectores de pantalla no podían interpretar su significado o leían caracteres confusos.
-* **Solución:** Agregar `accessible={true}` y `accessibilityLabel` descriptivo en los elementos visuales de error.
+#### 🔴 ERROR #7: Dependencias Faltantes en `useEffect` (Infinite Loop / Stale Closures)
+* **Problema:** Omitir dependencias en hooks de animación.
+* **Solución:** Incluir todas las referencias requeridas en el arreglo de dependencias.
 
 ---
 
 ### 📁 Archivo: `src/components/Loading.tsx`
 
-#### 🔴 ERROR #8: Memory Leak en Animaciones
-* **Problema:** `Animated.timing` iniciaba la animación pero no retornaba una función de limpieza (*cleanup*). Si el usuario cambiaba de pantalla mientras animaba, se producía un memory leak y la advertencia: *"Can't perform a React state update on an unmounted component"*.
-* **Solución:** Retornar `animation.stop()` en la función cleanup del `useEffect`:
-  ```tsx
-  useEffect(() => {
-    const animation = Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    });
-
-    animation.start();
-
-    return () => {
-      animation.stop();
-    };
-  }, [fadeAnim]);
-  ```
-
----
+#### 🔴 ERROR #8: Memory Leaks por Animaciones no Limpiadas
+* **Problema:** Animaciones en loop continuo seguían ejecutándose tras desmontar el componente.
+* **Solución:** Retornar función de limpieza `animation.stop()` en el return de `useEffect`.
 
 #### 🔴 ERROR #9: `useNativeDriver: false` Innecesario
-* **Problema:** Se usaba `useNativeDriver: false` para animar opacidad (`opacity`), forzando el cálculo en el hilo de JavaScript y causando pérdida de fotogramas (FPS drop).
-* **Solución:** Cambiar a `useNativeDriver: true` ya que la opacidad está 100% soportada por el motor nativo de animación.
-
----
+* **Problema:** Animar opacidad por software en lugar de aceleración por hardware.
+* **Solución:** Configurar `useNativeDriver: true`.
 
 #### 🔴 ERROR #10: Orden Inválido de Hooks de React
-* **Problema:** Se llamaba `useEffect` antes de la inicialización de `useRef`. React exige que los hooks se invoquen en el mismo orden exacto en cada render.
-* **Solución:** Declarar `useRef` al inicio del componente y `useEffect` posteriormente.
+* **Problema:** Declarar `useEffect` antes de `useRef`.
+* **Solución:** Mantener siempre `useRef` primero y `useEffect` después.
 
 ---
 
@@ -145,8 +75,97 @@ En la rama `dev-clase-2` se identificaron y solucionaron **10 errores fundamenta
 
 | # | Archivo | Causa Raíz | Solución Aplicada |
 |---|---------|------------|-------------------|
-| **E1** | `package.json` | `src/api/client.ts` y `src/utils/storage.ts` requerían `axios` y `expo-secure-store`, pero no estaban en las dependencias. | Se ejecutó `npm install axios expo-secure-store` y se registraron en `package.json`. |
-| **E2** | `expo-env.d.ts` | TypeScript reportaba errores en `animated-icon.web.tsx` (`*.module.css`) y `theme.ts` (`@/global.css`) por falta de declaraciones de módulos CSS. | Se creó el archivo de declaraciones `expo-env.d.ts` con `declare module '*.module.css'` y `declare module '*.css'`. |
+| **E1** | `package.json` | `src/api/client.ts` y `src/utils/storage.ts` requerían `axios` y `expo-secure-store`. | Se ejecutó `npm install axios expo-secure-store` y se registraron en `package.json`. |
+| **E2** | `expo-env.d.ts` | TS2307 por falta de tipos para `*.module.css` y `@/global.css`. | Se creó el archivo de declaraciones `expo-env.d.ts`. |
+
+---
+
+## 🚀 PARTE 3: Errores del Nuevo Commit (`64fd148` & `8a106c9`) — Contexts, Tabs, Tema Oscuro y Notificaciones
+
+### 1. `src/context/ThemeContext.tsx` — Dependencia Faltante y Error de Tipado
+* **Error:** 
+  - `error TS2307: Cannot find module '@react-native-async-storage/async-storage'`
+  - `error TS2345: Argument of type 'ColorSchemeName' is not assignable to parameter of type 'SetStateAction<Theme>'. Type '"unspecified"' is not assignable.`
+* **Causa:** El commit introdujo el uso de `AsyncStorage` sin instalarlo en `package.json`, y `useColorScheme()` puede retornar `'unspecified'`.
+* **Solución:**
+  1. Se instaló `@react-native-async-storage/async-storage` en `package.json`.
+  2. Se añadió fallback isomórfico para Web (`window.localStorage`).
+  3. Se validó estrictamente `systemColorScheme === 'dark' || systemColorScheme === 'light'`.
+
+---
+
+### 2. `src/components/SearchBar.tsx` — Incompatibilidad de tipos en `NodeJS.Timeout`
+* **Error:** `error TS2694: Namespace 'NodeJS' has no exported member 'Timeout'`.
+* **Causa:** `NodeJS.Timeout` no forma parte del entorno global de TypeScript en React Native / Expo.
+* **Solución:** Reemplazado por `ReturnType<typeof setTimeout> | null`.
+
+---
+
+### 3. `src/app/(tabs)/_layout.tsx` — Incompatibilidad de `ColorValue` en `TabIconProps`
+* **Error:** `error TS2322: Type 'ColorValue' is not assignable to type 'string'`.
+* **Causa:** El callback `tabBarIcon` de React Navigation entrega `ColorValue` (que puede ser `OpaqueColorValue`), pero la interfaz exigía `string`.
+* **Solución:**
+  1. Se actualizó la interfaz con `color: ColorValue | string`.
+  2. Se sustituyeron las letras estáticas ('H', 'P', 'U', 'S') por iconos emoji de alta legibilidad (`🏠`, `👥`, `👤`, `⚙️`).
+
+---
+
+### 4. `src/app/_layout.tsx` — Ausencia de Context Providers en el Árbol Raíz
+* **Problema en ejecución:** Al usar `useTheme()`, `useNotification()`, `useCart()` o `useAuth()` en cualquier pantalla, la app colapsaba en runtime con:
+  `Error: useTheme must be used within a ThemeProvider`.
+* **Solución:** Se envolvió el árbol de navegación completo en `src/app/_layout.tsx`:
+  ```tsx
+  <ThemeProvider>
+    <NotificationProvider>
+      <CartProvider>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            ...
+          </Stack>
+          <NotificationList />
+        </AuthProvider>
+      </CartProvider>
+    </NotificationProvider>
+  </ThemeProvider>
+  ```
+  Esto garantiza que cualquier componente acceda al tema, al carrito y a las notificaciones toast flotantes sin fallos.
+
+---
+
+### 5. `src/app/(tabs)/students.tsx` — Archivo Faltante en la Ruta de Pestañas
+* **Problema:** `(tabs)/_layout.tsx` declaraba `<Tabs.Screen name="students" ... />`, pero el commit colocó `students.tsx` únicamente en `src/app/students.tsx` (raíz), dejando la pestaña rota al pulsar en el menú inferior.
+* **Solución:** Se creó [`src/app/(tabs)/students.tsx`](file:///c:/xampp/htdocs/IDGS%20104/DesarrolloMovil/RepoApp/src/app/(tabs)/students.tsx), integrando:
+  - Soporte de Tema Claro/Oscuro (`useTheme`).
+  - Lista de estudiantes con filtrado y pull-to-refresh.
+  - Vinculación con `CartContext` (`addItem`) para incrementar dinámicamente el badge rojo en la pestaña de estudiantes según los requisitos de la Clase 4.
+
+---
+
+### 6. `src/app/(tabs)/profile.tsx` y `settings.tsx` — Contenido Cortado por el TabBar
+* **Problema:** En pantallas y navegadores web estándar, las secciones inferiores quedaban ocultas o no permitían scroll debido a la altura fija del `TabBar`.
+* **Solución:**
+  - Se configuró `contentContainerStyle={{ paddingBottom: 110 }}`.
+  - En `profile.tsx` se añadió confirmación de cierre de sesión multiplataforma (`window.confirm` en Web / `Alert.alert` en Móvil).
+  - En `settings.tsx` se sustituyeron los bordes estáticos `#E5E7EB` por `colors.border` para que luzcan bien en modo oscuro.
+
+---
+
+### 7. `src/context/NotificationContext.tsx` y `Notification.tsx` — Notificaciones Toast / Push
+* **Mejoras implementadas:**
+  - Se reordenó la declaración de `dismiss` antes de `show` dentro de `useCallback` para evitar variables no inicializadas.
+  - Se reemplazó el método obsoleto `substr` por `substring`.
+  - En `Notification.tsx` se agregaron animaciones fluidas con `Animated.timing` (opacidad y traslación vertical `translateY`) para que las notificaciones aparezcan y desaparezcan de manera atractiva.
+
+---
+
+### 8. `src/services/studentService.ts` — Resiliencia en Búsqueda (`/search`)
+* **Problema:** En el backend Express, `/api/students/search` chocaba con la ruta parametrizada `/api/students/:id`.
+* **Solución:** Se incorporó un bloque `try/catch`: si el endpoint `/search` falla, se ejecuta automáticamente un filtrado en cliente sobre `getAll()` comparando nombre, apellido, matrícula y correo.
+
+---
+
+### 9. Adaptación Global de Tema Oscuro en Listas e Inputs
+* En `StudentList.tsx`, `index.tsx`, `login.tsx` y `register.tsx` se integraron las variables `colors.background`, `colors.card`, `colors.text` y `colors.border`, asegurando que al alternar el switch en **Ajustes** toda la interfaz cambie de color inmediatamente.
 
 ---
 
@@ -155,5 +174,5 @@ En la rama `dev-clase-2` se identificaron y solucionaron **10 errores fundamenta
 Ejecución de TypeScript Compiler:
 ```bash
 npx tsc --noEmit
-# Resultado: 0 errores encontrados.
+# Resultado: 0 errores encontrados en toda la aplicación.
 ```

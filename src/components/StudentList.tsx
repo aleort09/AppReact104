@@ -1,11 +1,12 @@
 /**
- * Componente de lista de estudiantes
+ * Componente de lista de estudiantes con filtrado y soporte de tema
  */
 
 import React, { useState, useMemo } from 'react';
 import { View, FlatList, TextInput, StyleSheet, Text, RefreshControl } from 'react-native';
 import StudentCard from './StudentCard';
 import { Student } from '../types/student';
+import { useTheme } from '../context/ThemeContext';
 
 interface StudentListProps {
   students: Student[];
@@ -20,6 +21,7 @@ export default function StudentList({
   onRefresh,
   refreshing = false
 }: StudentListProps) {
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredStudents = useMemo(() => {
@@ -27,9 +29,9 @@ export default function StudentList({
     
     const query = searchQuery.toLowerCase();
     return students.filter(student =>
-      student.nombre.toLowerCase().includes(query) ||
-      student.apellido.toLowerCase().includes(query) ||
-      student.matricula.toLowerCase().includes(query)
+      (student.nombre && student.nombre.toLowerCase().includes(query)) ||
+      (student.apellido && student.apellido.toLowerCase().includes(query)) ||
+      (student.matricula && student.matricula.toLowerCase().includes(query))
     );
   }, [students, searchQuery]);
 
@@ -38,10 +40,18 @@ export default function StudentList({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TextInput
-        style={styles.searchInput}
+        style={[
+          styles.searchInput, 
+          { 
+            backgroundColor: colors.card, 
+            color: colors.text, 
+            borderColor: colors.border 
+          }
+        ]}
         placeholder="Buscar por nombre, apellido o matrícula..."
+        placeholderTextColor={colors.secondary}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
@@ -55,12 +65,14 @@ export default function StudentList({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#3B82F6']}
+              colors={[colors.primary]}
             />
           ) : undefined
         }
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No se encontraron estudiantes</Text>
+          <Text style={[styles.emptyText, { color: colors.secondary }]}>
+            No se encontraron estudiantes
+          </Text>
         }
       />
     </View>
@@ -70,23 +82,21 @@ export default function StudentList({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
     padding: 12,
     marginHorizontal: 16,
     marginVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    fontSize: 15,
   },
   listContent: {
     padding: 16,
+    paddingBottom: 110,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#6B7280',
     fontSize: 16,
     marginTop: 40,
   },

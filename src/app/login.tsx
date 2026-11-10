@@ -2,8 +2,8 @@
  * Pantalla de login
  */
 
-import React, { useState } from 'react';
-import { View, StyleSheet, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
@@ -13,15 +13,16 @@ import LoginForm from '../components/LoginForm';
 export default function LoginScreen() {
   const router = useRouter();
   const { login, loading, error } = useAuth();
-  const { showError } = useNotification();
+  const { showError, showSuccess } = useNotification();
   const { colors } = useTheme();
 
   const handleLogin = async (email: string, password: string) => {
     const success = await login(email, password);
     if (success) {
-      router.replace('/(tabs)');
+      showSuccess('Bienvenido', 'Has iniciado sesión correctamente');
+      router.replace('/(tabs)' as any);
     } else {
-      showError('Error', 'No se pudo iniciar sesion');
+      showError('Error', 'Credenciales inválidas o error de red');
     }
   };
 
@@ -33,6 +34,15 @@ export default function LoginScreen() {
           loading={loading}
           error={error?.message || ''}
         />
+
+        <TouchableOpacity 
+          style={styles.registerLink} 
+          onPress={() => router.push('/register' as any)}
+        >
+          <Text style={[styles.linkText, { color: colors.primary }]}>
+            ¿No tienes cuenta? Regístrate aquí
+          </Text>
+        </TouchableOpacity>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -44,5 +54,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  registerLink: {
+    marginTop: 20,
+  },
+  linkText: {
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

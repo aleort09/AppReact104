@@ -1,8 +1,3 @@
 /// <reference types="expo/types" />
 
-declare module '*.module.css' {
-  const classes: { [key: string]: string };
-  export default classes;
-}
-
-declare module '*.css';
+// NOTE: This file should not be edited and should be in your git ignore

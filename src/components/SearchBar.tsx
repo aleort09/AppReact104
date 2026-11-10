@@ -21,7 +21,7 @@ export default function SearchBar({
   debounceMs = 300
 }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLocalValue(value);
@@ -45,22 +45,22 @@ export default function SearchBar({
 
   const handleClear = () => {
     setLocalValue('');
-    if (onClear) {
-      onClear();
-    }
+    onChangeText('');
+    onClear?.();
   };
 
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder={placeholder}
         value={localValue}
         onChangeText={setLocalValue}
+        placeholder={placeholder}
+        placeholderTextColor="#9CA3AF"
       />
       {localValue.length > 0 && (
         <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-          <Text style={styles.clearText}>X</Text>
+          <Text style={styles.clearText}>✕</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -72,23 +72,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
   },
   input: {
     flex: 1,
-    padding: 12,
+    paddingVertical: 10,
     fontSize: 16,
+    color: '#111827',
   },
   clearButton: {
-    padding: 12,
+    padding: 6,
   },
   clearText: {
-    color: '#6B7280',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#9CA3AF',
+    fontSize: 16,
   },
 });
