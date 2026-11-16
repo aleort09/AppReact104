@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
@@ -27,24 +27,22 @@ export default function LoginScreen() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <LoginForm
-          onLogin={handleLogin}
-          loading={loading}
-          error={error?.message || ''}
-        />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LoginForm
+        onLogin={handleLogin}
+        loading={loading}
+        error={error?.message || ''}
+      />
 
-        <TouchableOpacity 
-          style={styles.registerLink} 
-          onPress={() => router.push('/register' as any)}
-        >
-          <Text style={[styles.linkText, { color: colors.primary }]}>
-            ¿No tienes cuenta? Regístrate aquí
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableWithoutFeedback>
+      <TouchableOpacity 
+        style={styles.registerLink} 
+        onPress={() => router.push('/register' as any)}
+      >
+        <Text style={[styles.linkText, { color: colors.primary }]}>
+          ¿No tienes cuenta? Regístrate aquí
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 

@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
@@ -40,56 +40,54 @@ export default function RegisterScreen() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Crear cuenta</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Crear cuenta</Text>
 
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder="Email"
-          placeholderTextColor={colors.secondary}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder="Email"
+        placeholderTextColor={colors.secondary}
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
 
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder="Contraseña"
-          placeholderTextColor={colors.secondary}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder="Contraseña"
+        placeholderTextColor={colors.secondary}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
 
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder="Confirmar contraseña"
-          placeholderTextColor={colors.secondary}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder="Confirmar contraseña"
+        placeholderTextColor={colors.secondary}
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+      />
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
-          onPress={handleRegister}
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Creando...' : 'Crear cuenta'}
-          </Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: colors.primary }]}
+        onPress={handleRegister}
+        disabled={loading}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Creando...' : 'Crear cuenta'}
+        </Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/login' as any)}>
-          <Text style={[styles.link, { color: colors.primary }]}>
-            ¿Ya tienes cuenta? Inicia sesión aquí
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableWithoutFeedback>
+      <TouchableOpacity onPress={() => router.push('/login' as any)}>
+        <Text style={[styles.link, { color: colors.primary }]}>
+          ¿Ya tienes cuenta? Inicia sesión aquí
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 

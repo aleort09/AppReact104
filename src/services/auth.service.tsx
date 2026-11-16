@@ -1,5 +1,6 @@
 import { API_URL } from "@/constants/api";
 import { LoginRequest, LoginResponse } from "@/interfaces/auth.interface";
+import { saveAccessToken, saveRefreshToken } from "@/utils/storage";
 
 export const loginService = async(data: LoginRequest):Promise<LoginResponse> => {
     const response =  await fetch(
@@ -24,10 +25,16 @@ export const loginService = async(data: LoginRequest):Promise<LoginResponse> => 
         };
     }
 
+    const token = result.accessToken || result.token;
+    if (token) {
+        await saveAccessToken(token);
+    }
+    if (result.refreshToken) {
+        await saveRefreshToken(result.refreshToken);
+    }
 
     return {
         success: true,
         message: "Login correcto"
-    }
-
-}
+    };
+};

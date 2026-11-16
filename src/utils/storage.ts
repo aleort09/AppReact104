@@ -48,9 +48,13 @@ function removeWebItem(key: string): void {
 }
 
 /**
- * Guarda el access token de forma segura
+ * Guarda el access token de forma segura (ignora valores undefined o nulos)
  */
 export async function saveAccessToken(token: string): Promise<void> {
+  if (!token || token === 'undefined' || token === 'null') {
+    await removeAccessToken();
+    return;
+  }
   if (isWeb) {
     setWebItem(ACCESS_TOKEN_KEY, token);
     return;
@@ -58,22 +62,38 @@ export async function saveAccessToken(token: string): Promise<void> {
   try {
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
   } catch (error) {
-    console.warn('Error guardando access token en SecureStore:', error);
+    console.error('Error al guardar access token:', error);
   }
 }
 
 /**
- * Obtiene el access token almacenado
+ * Obtiene el access token almacenado (valida que no sea 'undefined')
  */
 export async function getAccessToken(): Promise<string | null> {
   if (isWeb) {
-    return getWebItem(ACCESS_TOKEN_KEY);
+    const val = getWebItem(ACCESS_TOKEN_KEY);
+    return val && val !== 'undefined' && val !== 'null' ? val : null;
   }
   try {
-    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const val = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    return val && val !== 'undefined' && val !== 'null' ? val : null;
   } catch (error) {
-    console.warn('Error obteniendo access token en SecureStore:', error);
     return null;
+  }
+}
+
+/**
+ * Elimina el access token
+ */
+export async function removeAccessToken(): Promise<void> {
+  if (isWeb) {
+    removeWebItem(ACCESS_TOKEN_KEY);
+    return;
+  }
+  try {
+    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+  } catch (error) {
+    console.error('Error al eliminar access token:', error);
   }
 }
 
@@ -81,6 +101,10 @@ export async function getAccessToken(): Promise<string | null> {
  * Guarda el refresh token de forma segura
  */
 export async function saveRefreshToken(token: string): Promise<void> {
+  if (!token || token === 'undefined' || token === 'null') {
+    await removeRefreshToken();
+    return;
+  }
   if (isWeb) {
     setWebItem(REFRESH_TOKEN_KEY, token);
     return;
@@ -88,7 +112,7 @@ export async function saveRefreshToken(token: string): Promise<void> {
   try {
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
   } catch (error) {
-    console.warn('Error guardando refresh token en SecureStore:', error);
+    console.error('Error al guardar refresh token:', error);
   }
 }
 
@@ -97,29 +121,35 @@ export async function saveRefreshToken(token: string): Promise<void> {
  */
 export async function getRefreshToken(): Promise<string | null> {
   if (isWeb) {
-    return getWebItem(REFRESH_TOKEN_KEY);
+    const val = getWebItem(REFRESH_TOKEN_KEY);
+    return val && val !== 'undefined' && val !== 'null' ? val : null;
   }
   try {
-    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    const val = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    return val && val !== 'undefined' && val !== 'null' ? val : null;
   } catch (error) {
-    console.warn('Error obteniendo refresh token en SecureStore:', error);
     return null;
   }
 }
 
 /**
- * Elimina todos los tokens almacenados (logout)
+ * Elimina el refresh token
  */
-export async function clearTokens(): Promise<void> {
+export async function removeRefreshToken(): Promise<void> {
   if (isWeb) {
-    removeWebItem(ACCESS_TOKEN_KEY);
     removeWebItem(REFRESH_TOKEN_KEY);
     return;
   }
   try {
-    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   } catch (error) {
-    console.warn('Error eliminando tokens en SecureStore:', error);
+    console.error('Error al eliminar refresh token:', error);
   }
+}
+
+/**
+ * Limpia todos los tokens (logout)
+ */
+export async function clearTokens(): Promise<void> {
+  await Promise.all([removeAccessToken(), removeRefreshToken()]);
 }
