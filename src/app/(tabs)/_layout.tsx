@@ -1,5 +1,6 @@
 /**
  * Layout de tabs con navegación inferior
+ * Incluye Inicio, Estudiantes, Carrito (con badge dinámico), Perfil y Ajustes
  */
 
 import React from 'react';
@@ -10,7 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 export default function TabLayout() {
   const { itemCount } = useCart();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
@@ -18,21 +19,32 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.secondary,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
+          height: 64,
           paddingBottom: 8,
           paddingTop: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 5,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          fontSize: 11,
+          fontWeight: '600',
         },
         headerStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border,
+          borderBottomWidth: 1,
         },
         headerTintColor: colors.text,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          fontSize: 18,
+        },
       }}
     >
       <Tabs.Screen
@@ -40,8 +52,8 @@ export default function TabLayout() {
         options={{
           title: 'Inicio',
           tabBarLabel: 'Inicio',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="home" color={color} size={size} />
+          tabBarIcon: ({ size }) => (
+            <TabIcon name="home" size={size} />
           ),
         }}
       />
@@ -51,14 +63,26 @@ export default function TabLayout() {
         options={{
           title: 'Estudiantes',
           tabBarLabel: 'Estudiantes',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="people" color={color} size={size} />
+          tabBarIcon: ({ size }) => (
+            <TabIcon name="people" size={size} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: 'Carrito',
+          tabBarLabel: 'Carrito',
+          tabBarIcon: ({ size }) => (
+            <TabIcon name="cart" size={size} />
           ),
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: '#EF4444',
             color: '#FFFFFF',
             fontSize: 10,
+            fontWeight: 'bold',
             minWidth: 18,
             height: 18,
             borderRadius: 9,
@@ -71,8 +95,8 @@ export default function TabLayout() {
         options={{
           title: 'Perfil',
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="person" color={color} size={size} />
+          tabBarIcon: ({ size }) => (
+            <TabIcon name="person" size={size} />
           ),
         }}
       />
@@ -82,8 +106,8 @@ export default function TabLayout() {
         options={{
           title: 'Ajustes',
           tabBarLabel: 'Ajustes',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="settings" color={color} size={size} />
+          tabBarIcon: ({ size }) => (
+            <TabIcon name="settings" size={size} />
           ),
         }}
       />
@@ -92,15 +116,15 @@ export default function TabLayout() {
 }
 
 interface TabIconProps {
-  name: 'home' | 'people' | 'person' | 'settings';
-  color: ColorValue | string;
-  size: number;
+  name: 'home' | 'people' | 'cart' | 'person' | 'settings';
+  size?: number;
 }
 
-function TabIcon({ name, color, size }: TabIconProps) {
+function TabIcon({ name, size }: TabIconProps) {
   const icons = {
     home: '🏠',
     people: '👥',
+    cart: '🛒',
     person: '👤',
     settings: '⚙️',
   };

@@ -1,24 +1,26 @@
 /**
- * Pantalla de inicio (Dashboard de Tabs)
- * Muestra bienvenida al usuario y accesos rápidos a las pestañas principales
+ * Pantalla de inicio (Dashboard Principal)
+ * Muestra métricas rápidas de alumnos y carrito, y accesos directos
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthContext } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { useStudents } from '../../hooks/useStudents';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const { user } = useAuth();
+  const { colors, isDark } = useTheme();
+  const { user } = useAuthContext();
+  const { itemCount, total } = useCart();
+  const { students } = useStudents();
 
-  const quickActions = [
-    { title: 'Ver Estudiantes', subtitle: 'Listado completo de alumnos', route: '/(tabs)/students', icon: '👥', color: '#3B82F6' },
-    { title: 'Mi Perfil', subtitle: 'Ver credenciales y cerrar sesión', route: '/(tabs)/profile', icon: '👤', color: '#10B981' },
-    { title: 'Ajustes y Notificaciones', subtitle: 'Tema oscuro y pruebas toast', route: '/(tabs)/settings', icon: '⚙️', color: '#8B5CF6' },
-  ];
+  const displayName = user?.nombre 
+    ? `${user.nombre} ${user.apellido_paterno || ''}`.trim()
+    : (user?.email?.split('@')[0] || 'Estudiante');
 
   return (
     <ScrollView 
@@ -31,38 +33,122 @@ export default function HomeScreen() {
         <View style={[styles.welcomeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={styles.emoji}>👋</Text>
           <Text style={[styles.welcomeTitle, { color: colors.text }]}>
-            ¡Bienvenido!
+            ¡Hola, {displayName}!
           </Text>
           <Text style={[styles.welcomeSubtitle, { color: colors.secondary }]}>
-            {user?.email || 'Usuario Activo'}
+            Panel de Gestión Escolar y Matrículas
           </Text>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Acciones rápidas
-        </Text>
-
-        {quickActions.map((action, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push(action.route as any)}
+        {/* MÉTRICAS RÁPIDAS */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Resumen del Sistema</Text>
+        
+        <View style={styles.statsRow}>
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(tabs)/students' as any)}
             activeOpacity={0.7}
           >
-            <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-              <Text style={styles.iconText}>{action.icon}</Text>
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={[styles.actionTitle, { color: colors.text }]}>
-                {action.title}
-              </Text>
-              <Text style={[styles.actionSubtitle, { color: colors.secondary }]}>
-                {action.subtitle}
-              </Text>
-            </View>
-            <Text style={[styles.arrow, { color: colors.secondary }]}>›</Text>
+            <Text style={styles.statIcon}>👨‍🎓</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{students.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Estudiantes</Text>
           </TouchableOpacity>
-        ))}
+
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(tabs)/cart' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.statIcon}>🛒</Text>
+            <Text style={[styles.statNumber, { color: '#10B981' }]}>{itemCount}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>
+              {itemCount > 0 ? `$${total.toFixed(0)} MXN` : 'En Carrito'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(tabs)/settings' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.statIcon}>{isDark ? '🌙' : '☀️'}</Text>
+            <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>{isDark ? 'Dark' : 'Light'}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Tema</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ACCIONES RÁPIDAS */}
+        <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 14 }]}>
+          Acciones Rápidas
+        </Text>
+
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push('/(tabs)/students' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.actionIconContainer, { backgroundColor: '#3B82F6' }]}>
+            <Text style={styles.actionIcon}>👥</Text>
+          </View>
+          <View style={styles.actionInfo}>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>Ver Lista de Alumnos</Text>
+            <Text style={[styles.actionSubtitle, { color: colors.secondary }]}>
+              Consulta matrículas, busca y administra estudiantes
+            </Text>
+          </View>
+          <Text style={[styles.arrow, { color: colors.secondary }]}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push('/student/create' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.actionIconContainer, { backgroundColor: '#10B981' }]}>
+            <Text style={styles.actionIcon}>➕</Text>
+          </View>
+          <View style={styles.actionInfo}>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>Registrar Nuevo Alumno</Text>
+            <Text style={[styles.actionSubtitle, { color: colors.secondary }]}>
+              Da de alta un nuevo estudiante en la base de datos
+            </Text>
+          </View>
+          <Text style={[styles.arrow, { color: colors.secondary }]}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push('/(tabs)/cart' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.actionIconContainer, { backgroundColor: '#F59E0B' }]}>
+            <Text style={styles.actionIcon}>🛒</Text>
+          </View>
+          <View style={styles.actionInfo}>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>Revisar Carrito de Inscripciones</Text>
+            <Text style={[styles.actionSubtitle, { color: colors.secondary }]}>
+              {itemCount > 0 ? `${itemCount} pendiente(s) por pagar` : 'Vaciar o simular inscripciones'}
+            </Text>
+          </View>
+          <Text style={[styles.arrow, { color: colors.secondary }]}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push('/(tabs)/profile' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.actionIconContainer, { backgroundColor: '#8B5CF6' }]}>
+            <Text style={styles.actionIcon}>👤</Text>
+          </View>
+          <View style={styles.actionInfo}>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>Mi Perfil</Text>
+            <Text style={[styles.actionSubtitle, { color: colors.secondary }]}>
+              Edita tus nombres y gestiona tu sesión
+            </Text>
+          </View>
+          <Text style={[styles.arrow, { color: colors.secondary }]}>›</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -73,25 +159,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: 18,
     paddingBottom: 110,
     alignItems: 'center',
   },
   content: {
     width: '100%',
-    maxWidth: 600,
+    maxWidth: 680,
   },
   welcomeCard: {
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 24,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 5,
+    elevation: 2,
   },
   emoji: {
     fontSize: 44,
@@ -100,54 +186,87 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
+    textAlign: 'center',
   },
   welcomeSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
+    textAlign: 'center',
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 12,
   },
-  actionCard: {
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  statCard: {
+    flex: 1,
     borderRadius: 14,
     padding: 16,
-    marginBottom: 12,
+    alignItems: 'center',
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
-    elevation: 2,
+    elevation: 1,
   },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  statIcon: {
+    fontSize: 26,
+    marginBottom: 4,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  actionIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
-  iconText: {
-    fontSize: 22,
+  actionIcon: {
+    fontSize: 20,
   },
-  actionContent: {
+  actionInfo: {
     flex: 1,
   },
   actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: 'bold',
     marginBottom: 2,
   },
   actionSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
   },
   arrow: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '300',
-    marginLeft: 8,
+    marginLeft: 6,
   },
 });

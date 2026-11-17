@@ -1,20 +1,25 @@
 /**
  * Context para manejo global de autenticación
+ * Unificado con dev-clase-2, dev-clase-4 y dev-clase-6
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { User } from '../types/user';
+import { User, UpdateUserData } from '../types/user';
 import * as authApi from '../api/auth.api';
 import { saveAccessToken, saveRefreshToken, getAccessToken, clearTokens } from '../utils/storage';
 import { handleApiError, ApiError } from '../utils/errorHandler';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: ApiError | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
+  checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,16 +37,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const checkAuth = useCallback(async () => {
     try {
       const token = await getAccessToken();
-      if (!token) {
+      if (!token || token === 'undefined' || token === 'null') {
         setIsAuthenticated(false);
+        setUser(null);
         return;
       }
 
       setLoading(true);
       const currentUser = await authApi.getCurrentUser();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    } catch (error) {
+      if (currentUser && currentUser.id) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    } catch (err) {
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -55,15 +66,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const response = await authApi.login({ email, password });
+      const accessToken = response.accessToken || response.token;
 
-      await saveAccessToken(response.token);
-      await saveRefreshToken(response.refreshToken);
+      if (accessToken) {
+        await saveAccessToken(accessToken);
+      }
+      if (response.refreshToken) {
+        await saveRefreshToken(response.refreshToken);
+      }
 
-      setUser(response.user);
+      const userData = response.user || { id: 1, email };
+      setUser(userData);
       setIsAuthenticated(true);
       return true;
-    } catch (error) {
-      const apiError = handleApiError(error);
+    } catch (err) {
+      const apiError = handleApiError(err);
       setError(apiError);
       setIsAuthenticated(false);
       return false;
@@ -72,16 +89,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const register = useCallback(async (email: string, password: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await authApi.register({ email, password });
+      return await login(email, password);
+    } catch (err) {
+      const apiError = handleApiError(err);
+      setError(apiError);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [login]);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
-    } catch (error) {
-      // Ignorar errores
+    } catch (err) {
+      // Ignorar errores de logout
     } finally {
       await clearTokens();
       setUser(null);
       setIsAuthenticated(false);
     }
+  }, []);
+
+  const updateUser = useCallback((userData: Partial<User>) => {
+    setUser(prev => (prev ? { ...prev, ...userData } : (userData as User)));
+  }, []);
+
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
   useEffect(() => {
@@ -94,8 +135,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error,
     isAuthenticated,
     login,
+    register,
     logout,
-  }), [user, loading, error, isAuthenticated, login, logout]);
+    updateUser,
+    checkAuth,
+    clearError,
+  }), [user, loading, error, isAuthenticated, login, register, logout, updateUser, checkAuth, clearError]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -104,7 +149,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-export function useAuthContext() {
+export function useAuthContext(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuthContext must be used within an AuthProvider');

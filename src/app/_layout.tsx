@@ -23,7 +23,8 @@ export default function RootLayout() {
               <Stack.Screen name="login" />
               <Stack.Screen name="register" />
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="home" />
+              <Stack.Screen name="student/[id]" />
+              <Stack.Screen name="student/create" />
               <Stack.Screen name="students" />
             </Stack>
             <NotificationList />

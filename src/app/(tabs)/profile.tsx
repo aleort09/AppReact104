@@ -1,46 +1,129 @@
 /**
- * Pantalla de perfil de usuario
- * Soporta cambio de tema claro/oscuro y scroll fluido sin cortes por el TabBar
+ * Pantalla de perfil de usuario con visualización y edición
+ * Unificada con dev-clase-6, dev-clase-4 y dev-clase-2
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
+import apiClient from '../../api/client';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { colors, theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { colors, theme, toggleTheme, isDark } = useTheme();
+  const { user, logout, updateUser } = useAuthContext();
+  const { showSuccess, showError } = useNotification();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [nombre, setNombre] = useState('');
+  const [apellidoPaterno, setApellidoPaterno] = useState('');
+  const [apellidoMaterno, setApellidoMaterno] = useState('');
 
-  const handleLogout = async () => {
+  // Sincronizar campos al cargar o cambiar el usuario
+  useEffect(() => {
+    if (user) {
+      setNombre(user.nombre || '');
+      setApellidoPaterno(user.apellido_paterno || '');
+      setApellidoMaterno(user.apellido_materno || '');
+    }
+  }, [user]);
+
+  const handleLogout = () => {
+    const confirmMessage = '¿Estás seguro que deseas cerrar sesión?';
     if (Platform.OS === 'web') {
-      const confirm = typeof window !== 'undefined'
-        ? window.confirm('¿Estás seguro que deseas cerrar sesión?')
-        : true;
-      if (confirm) {
-        await logout();
-        router.replace('/login' as any);
+      const confirmed = typeof window !== 'undefined' ? window.confirm(confirmMessage) : true;
+      if (confirmed) {
+        performLogout();
       }
       return;
     }
 
     Alert.alert(
       'Cerrar sesión',
-      '¿Estás seguro que deseas cerrar sesión?',
+      confirmMessage,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Cerrar sesión',
           style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/login' as any);
-          },
+          onPress: performLogout,
         },
       ]
     );
+  };
+
+  const performLogout = async () => {
+    try {
+      await logout();
+      showSuccess('Sesión cerrada', 'Hasta pronto');
+      router.replace('/login' as any);
+    } catch (error) {
+      router.replace('/login' as any);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!nombre.trim()) {
+      showError('Campo requerido', 'El nombre es obligatorio');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Intentar actualizar en backend si existe la ruta
+      if (user?.id) {
+        try {
+          await apiClient.put(`/api/usuarios/${user.id}`, {
+            nombre: nombre.trim(),
+            apellido_paterno: apellidoPaterno.trim(),
+            apellido_materno: apellidoMaterno.trim() || null,
+          });
+        } catch {
+          // Si el endpoint no existe aún en el backend, se actualiza en el contexto local
+        }
+      }
+
+      updateUser({
+        nombre: nombre.trim(),
+        apellido_paterno: apellidoPaterno.trim(),
+        apellido_materno: apellidoMaterno.trim() || null,
+      });
+
+      showSuccess('Perfil Actualizado', 'Tus datos se guardaron correctamente');
+      setIsEditing(false);
+    } catch (err: any) {
+      showError('Error', err?.message || 'No se pudo actualizar el perfil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (user) {
+      setNombre(user.nombre || '');
+      setApellidoPaterno(user.apellido_paterno || '');
+      setApellidoMaterno(user.apellido_materno || '');
+    }
+    setIsEditing(false);
+  };
+
+  const getInitials = () => {
+    if (user?.nombre) {
+      const p1 = user.nombre.charAt(0).toUpperCase();
+      const p2 = user.apellido_paterno ? user.apellido_paterno.charAt(0).toUpperCase() : '';
+      return p1 + p2;
+    }
+    return user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+  };
+
+  const getFullName = () => {
+    if (!user) return 'Usuario';
+    const parts = [user.nombre, user.apellido_paterno, user.apellido_materno].filter(Boolean);
+    return parts.length > 0 ? parts.join(' ') : (user.email || 'Usuario Activo');
   };
 
   return (
@@ -49,26 +132,123 @@ export default function ProfileScreen() {
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.innerContainer}>
-        {/* AVATAR Y DATOS BÁSICOS */}
-        <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarText}>
-            {user?.email?.charAt(0).toUpperCase() || 'U'}
-          </Text>
+      <View style={styles.content}>
+        {/* TARJETA AVATAR Y DATOS BÁSICOS */}
+        <View style={[styles.profileHeaderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
+            <Text style={styles.avatarText}>{getInitials()}</Text>
+          </View>
+
+          <Text style={[styles.fullName, { color: colors.text }]}>{getFullName()}</Text>
+          <Text style={[styles.email, { color: colors.secondary }]}>{user?.email || 'usuario@ejemplo.com'}</Text>
+
+          <View style={[styles.rolBadge, { backgroundColor: isDark ? '#334155' : '#E0E7FF' }]}>
+            <Text style={[styles.rolText, { color: colors.primary }]}>
+              {user?.rol_nombre || 'Alumno / Estudiante'}
+            </Text>
+          </View>
         </View>
 
-        <Text style={[styles.email, { color: colors.text }]}>
-          {user?.email || 'usuario@ejemplo.com'}
-        </Text>
-
-        {/* SECCIÓN PREFERENCIAS */}
+        {/* SECCIÓN INFORMACIÓN PERSONAL (EDICIÓN Y VISUALIZACIÓN) */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Preferencias de apariencia
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Información Personal</Text>
+            {!isEditing && (
+              <TouchableOpacity onPress={() => setIsEditing(true)} activeOpacity={0.7}>
+                <Text style={[styles.editButtonText, { color: colors.primary }]}>✏️ Editar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {isEditing ? (
+            <View style={styles.formContainer}>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.secondary }]}>Nombre</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  value={nombre}
+                  onChangeText={setNombre}
+                  placeholder="Nombre(s)"
+                  placeholderTextColor={colors.secondary}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.secondary }]}>Apellido Paterno</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  value={apellidoPaterno}
+                  onChangeText={setApellidoPaterno}
+                  placeholder="Apellido Paterno"
+                  placeholderTextColor={colors.secondary}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.secondary }]}>Apellido Materno</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  value={apellidoMaterno}
+                  onChangeText={setApellidoMaterno}
+                  placeholder="Apellido Materno"
+                  placeholderTextColor={colors.secondary}
+                />
+              </View>
+
+              <View style={styles.buttonRow}>
+                <TouchableOpacity 
+                  style={[styles.cancelBtn, { borderColor: colors.border }]} 
+                  onPress={handleCancel}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.cancelBtnText, { color: colors.secondary }]}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.saveBtn, { backgroundColor: colors.primary }]} 
+                  onPress={handleSave}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.saveBtnText}>Guardar Cambios</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View>
+              <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.infoLabel, { color: colors.secondary }]}>Nombre:</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{user?.nombre || 'No asignado'}</Text>
+              </View>
+
+              <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.infoLabel, { color: colors.secondary }]}>Apellido Paterno:</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{user?.apellido_paterno || 'No asignado'}</Text>
+              </View>
+
+              <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.infoLabel, { color: colors.secondary }]}>Apellido Materno:</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{user?.apellido_materno || 'No asignado'}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.secondary }]}>ID Usuario:</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>#{user?.id || 1}</Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* PREFERENCIAS DE APARIENCIA */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferencias</Text>
 
           <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomColor: colors.border }]} 
+            style={styles.settingItem} 
             onPress={toggleTheme}
             activeOpacity={0.7}
           >
@@ -76,31 +256,9 @@ export default function ProfileScreen() {
               {theme === 'dark' ? '🌙 Modo Oscuro' : '☀️ Modo Claro'}
             </Text>
             <Text style={[styles.settingValue, { color: colors.primary }]}>
-              Cambiar a {theme === 'dark' ? 'Claro' : 'Oscuro'}
+              Cambiar a {theme === 'dark' ? 'Claro' : 'Oscuro'} →
             </Text>
           </TouchableOpacity>
-        </View>
-
-        {/* INFORMACIÓN DE CUENTA */}
-        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Información de cuenta
-          </Text>
-
-          <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.infoLabel, { color: colors.secondary }]}>ID de usuario:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{user?.id || 1}</Text>
-          </View>
-
-          <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.infoLabel, { color: colors.secondary }]}>Email:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{user?.email || 'usuario@ejemplo.com'}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.secondary }]}>Estado:</Text>
-            <Text style={[styles.infoValue, { color: '#10B981' }]}>Activo</Text>
-          </View>
         </View>
 
         {/* BOTÓN CERRAR SESIÓN */}
@@ -109,7 +267,7 @@ export default function ProfileScreen() {
           onPress={handleLogout}
           activeOpacity={0.8}
         >
-          <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
+          <Text style={styles.logoutText}>🚪 Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -121,42 +279,65 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: 18,
     paddingBottom: 110,
     alignItems: 'center',
   },
-  innerContainer: {
+  content: {
     width: '100%',
-    maxWidth: 600,
-    alignItems: 'center',
+    maxWidth: 680,
   },
-  avatarContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    justifyContent: 'center',
+  profileHeaderCard: {
+    borderRadius: 18,
+    padding: 22,
     alignItems: 'center',
-    marginBottom: 14,
-    marginTop: 10,
+    marginBottom: 16,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  avatarContainer: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 38,
+    fontSize: 34,
     fontWeight: 'bold',
   },
+  fullName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
   email: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 24,
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  rolBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  rolText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   section: {
-    width: '100%',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 18,
     marginBottom: 16,
     borderWidth: 1,
@@ -164,25 +345,65 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
-    elevation: 2,
+    elevation: 1,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 14,
-  },
-  settingItem: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    marginBottom: 14,
   },
-  settingLabel: {
-    fontSize: 15,
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
   },
-  settingValue: {
+  editButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  formContainer: {
+    marginTop: 6,
+  },
+  inputGroup: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 11,
+    fontSize: 15,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   infoRow: {
     flexDirection: 'row',
@@ -195,24 +416,37 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  settingLabel: {
+    fontSize: 15,
     fontWeight: '500',
   },
+  settingValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   logoutButton: {
-    width: '100%',
     backgroundColor: '#EF4444',
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 4,
     shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
     elevation: 3,
   },
   logoutText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 });

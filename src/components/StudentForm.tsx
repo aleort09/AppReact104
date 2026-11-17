@@ -1,10 +1,11 @@
 /**
- * Formulario para crear/editar estudiantes
+ * Formulario para crear/editar estudiantes con soporte de tema
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, Alert, Keyboard } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, Alert, Platform } from 'react-native';
 import { Student } from '../types/student';
+import { useTheme } from '../context/ThemeContext';
 
 interface StudentFormProps {
   student?: Student;
@@ -13,6 +14,7 @@ interface StudentFormProps {
 }
 
 export default function StudentForm({ student, onSubmit, onCancel }: StudentFormProps) {
+  const { colors } = useTheme();
   const [nombre, setNombre] = useState(student?.nombre || '');
   const [apellido, setApellido] = useState(student?.apellido || '');
   const [matricula, setMatricula] = useState(student?.matricula || '');
@@ -20,17 +22,21 @@ export default function StudentForm({ student, onSubmit, onCancel }: StudentForm
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!student) {
-      setNombre('');
-      setApellido('');
-      setMatricula('');
-      setEmail('');
+    if (student) {
+      setNombre(student.nombre || '');
+      setApellido(student.apellido || '');
+      setMatricula(student.matricula || '');
+      setEmail(student.email || '');
     }
   }, [student]);
 
   const handleSubmit = async () => {
     if (!nombre.trim() || !apellido.trim() || !matricula.trim() || !email.trim()) {
-      Alert.alert('Error', 'Todos los campos son obligatorios');
+      if (Platform.OS === 'web') {
+        alert('Todos los campos son obligatorios.');
+      } else {
+        Alert.alert('Campos incompletos', 'Por favor llena todos los datos del alumno.');
+      }
       return;
     }
 
@@ -42,37 +48,52 @@ export default function StudentForm({ student, onSubmit, onCancel }: StudentForm
         matricula: matricula.trim(),
         email: email.trim(),
       });
-      Keyboard.dismiss();
     } catch (error) {
-      Alert.alert('Error', 'No se pudo guardar el estudiante');
+      // Manejado por el padre
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.formTitle, { color: colors.text }]}>
+        {student ? 'Editar Estudiante' : 'Datos del Alumno'}
+      </Text>
+
+      <Text style={[styles.label, { color: colors.secondary }]}>Nombre</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Nombre"
+        style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+        placeholder="Ej. Juan"
+        placeholderTextColor={colors.secondary}
         value={nombre}
         onChangeText={setNombre}
       />
+
+      <Text style={[styles.label, { color: colors.secondary }]}>Apellido</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Apellido"
+        style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+        placeholder="Ej. Pérez González"
+        placeholderTextColor={colors.secondary}
         value={apellido}
         onChangeText={setApellido}
       />
+
+      <Text style={[styles.label, { color: colors.secondary }]}>Matrícula</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Matrícula"
+        style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+        placeholder="Ej. MAT2026-001"
+        placeholderTextColor={colors.secondary}
         value={matricula}
         onChangeText={setMatricula}
+        autoCapitalize="characters"
       />
+
+      <Text style={[styles.label, { color: colors.secondary }]}>Correo Electrónico</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Email"
+        style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+        placeholder="correo@ejemplo.com"
+        placeholderTextColor={colors.secondary}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -80,16 +101,22 @@ export default function StudentForm({ student, onSubmit, onCancel }: StudentForm
       />
 
       <View style={styles.buttons}>
-        <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-          <Text style={styles.cancelText}>Cancelar</Text>
-        </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]} 
+          style={[styles.cancelButton, { borderColor: colors.border }]} 
+          onPress={onCancel}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.cancelText, { color: colors.secondary }]}>Cancelar</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.submitButton, { backgroundColor: colors.primary }, submitting && styles.submitButtonDisabled]} 
           onPress={handleSubmit}
           disabled={submitting}
+          activeOpacity={0.8}
         >
           <Text style={styles.submitText}>
-            {student ? 'Actualizar' : 'Crear'}
+            {submitting ? 'Guardando...' : (student ? 'Actualizar' : 'Guardar Alumno')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -99,52 +126,67 @@ export default function StudentForm({ student, onSubmit, onCancel }: StudentForm
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 12,
-    margin: 16,
+    padding: 22,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
     marginBottom: 16,
-    fontSize: 16,
+    fontSize: 15,
   },
   buttons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 10,
+    gap: 12,
   },
   cancelButton: {
     flex: 1,
-    padding: 14,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginRight: 8,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#6B7280',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   submitButton: {
     flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    backgroundColor: '#3B82F6',
-    marginLeft: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   submitButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    opacity: 0.6,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });
