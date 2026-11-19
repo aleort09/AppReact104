@@ -15,7 +15,16 @@ export interface AuthContextType {
   error: ApiError | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string) => Promise<boolean>;
+  register: (
+    email: string,
+    password: string,
+    studentData?: {
+      nombre?: string;
+      apellido_paterno?: string;
+      apellido_materno?: string;
+      matricula?: string;
+    }
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   checkAuth: () => Promise<void>;
@@ -89,21 +98,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
+  const register = useCallback(
+    async (
+      email: string,
+      password: string,
+      studentData?: {
+        nombre?: string;
+        apellido_paterno?: string;
+        apellido_materno?: string;
+        matricula?: string;
+      }
+    ): Promise<boolean> => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      await authApi.register({ email, password });
-      return await login(email, password);
-    } catch (err) {
-      const apiError = handleApiError(err);
-      setError(apiError);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [login]);
+      try {
+        await authApi.register({
+          email,
+          password,
+          rol_id: 1,
+          ...studentData,
+        });
+        return await login(email, password);
+      } catch (err) {
+        const apiError = handleApiError(err);
+        setError(apiError);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [login]
+  );
 
   const logout = useCallback(async () => {
     try {

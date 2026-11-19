@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useCart } from '../../context/CartContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -64,7 +65,7 @@ export default function CartScreen() {
       <View style={styles.content}>
         {/* ENCABEZADO */}
         <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={styles.headerIcon}>🛒</Text>
+          <FontAwesome name="shopping-cart" size={32} color={colors.primary} style={styles.headerIcon} />
           <Text style={[styles.headerTitle, { color: colors.text }]}>Mi Carrito</Text>
           <Text style={[styles.headerSubtitle, { color: colors.secondary }]}>
             {itemCount > 0 
@@ -73,10 +74,9 @@ export default function CartScreen() {
           </Text>
         </View>
 
-        {/* LISTADO DE ITEMS O ESTADO VACÍO */}
         {items.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={styles.emptyIcon}>📦</Text>
+            <FontAwesome name="inbox" size={48} color={colors.secondary} style={styles.emptyIcon} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>No hay elementos en el carrito</Text>
             <Text style={[styles.emptySubtitle, { color: colors.secondary }]}>
               Ve a la pestaña de Estudiantes para agregar alumnos o cursos a tu lista.
@@ -86,7 +86,10 @@ export default function CartScreen() {
               onPress={() => router.push('/(tabs)/students' as any)}
               activeOpacity={0.8}
             >
-              <Text style={styles.browseButtonText}>👥 Explorar Estudiantes</Text>
+              <View style={styles.inlineButtonRow}>
+                <FontAwesome name="users" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.browseButtonText}>Explorar Estudiantes</Text>
+              </View>
             </TouchableOpacity>
           </View>
         ) : (
@@ -104,7 +107,7 @@ export default function CartScreen() {
                 style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               >
                 <View style={[styles.itemAvatar, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.itemAvatarText}>🎓</Text>
+                  <FontAwesome name="graduation-cap" size={18} color="#FFFFFF" />
                 </View>
 
                 <View style={styles.itemDetails}>
@@ -119,7 +122,6 @@ export default function CartScreen() {
                   </Text>
                 </View>
 
-                {/* CONTROLES DE CANTIDAD */}
                 <View style={styles.quantityControls}>
                   <TouchableOpacity 
                     style={[styles.qtyButton, { borderColor: colors.border, backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}
@@ -144,13 +146,12 @@ export default function CartScreen() {
                     onPress={() => removeItem(item.id)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.deleteButtonText}>🗑️</Text>
+                    <FontAwesome name="trash" size={16} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
               </View>
             ))}
 
-            {/* RESUMEN DE COMPRA */}
             <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.summaryTitle, { color: colors.text }]}>Resumen del Carrito</Text>
 
@@ -176,7 +177,10 @@ export default function CartScreen() {
                 onPress={handleCheckout}
                 activeOpacity={0.8}
               >
-                <Text style={styles.checkoutButtonText}>✓ Confirmar e Inscribir</Text>
+                <View style={styles.inlineButtonRow}>
+                  <FontAwesome name="check" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={styles.checkoutButtonText}>Confirmar e Inscribir</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -211,8 +215,12 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
   },
+  inlineButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerIcon: {
-    fontSize: 40,
     marginBottom: 6,
   },
   headerTitle: {

@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthContext } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -31,7 +32,7 @@ export default function HomeScreen() {
       <View style={styles.content}>
         {/* TARJETA DE BIENVENIDA */}
         <View style={[styles.welcomeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={styles.emoji}>👋</Text>
+          <FontAwesome name="hand-peace-o" size={28} color="#F59E0B" style={styles.emoji} />
           <Text style={[styles.welcomeTitle, { color: colors.text }]}>
             ¡Hola, {displayName}!
           </Text>
@@ -40,7 +41,6 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* MÉTRICAS RÁPIDAS */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Resumen del Sistema</Text>
         
         <View style={styles.statsRow}>
@@ -49,7 +49,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/(tabs)/students' as any)}
             activeOpacity={0.7}
           >
-            <Text style={styles.statIcon}>👨‍🎓</Text>
+            <View style={styles.statIcon}>
+              <FontAwesome name="graduation-cap" size={24} color={colors.primary} />
+            </View>
             <Text style={[styles.statNumber, { color: colors.primary }]}>{students.length}</Text>
             <Text style={[styles.statLabel, { color: colors.secondary }]}>Estudiantes</Text>
           </TouchableOpacity>
@@ -59,7 +61,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/(tabs)/cart' as any)}
             activeOpacity={0.7}
           >
-            <Text style={styles.statIcon}>🛒</Text>
+            <View style={styles.statIcon}>
+              <FontAwesome name="shopping-cart" size={24} color="#10B981" />
+            </View>
             <Text style={[styles.statNumber, { color: '#10B981' }]}>{itemCount}</Text>
             <Text style={[styles.statLabel, { color: colors.secondary }]}>
               {itemCount > 0 ? `$${total.toFixed(0)} MXN` : 'En Carrito'}
@@ -71,13 +75,14 @@ export default function HomeScreen() {
             onPress={() => router.push('/(tabs)/settings' as any)}
             activeOpacity={0.7}
           >
-            <Text style={styles.statIcon}>{isDark ? '🌙' : '☀️'}</Text>
+            <View style={styles.statIcon}>
+              <FontAwesome name={isDark ? "moon-o" : "sun-o"} size={24} color="#8B5CF6" />
+            </View>
             <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>{isDark ? 'Dark' : 'Light'}</Text>
             <Text style={[styles.statLabel, { color: colors.secondary }]}>Tema</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ACCIONES RÁPIDAS */}
         <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 14 }]}>
           Acciones Rápidas
         </Text>
@@ -88,7 +93,7 @@ export default function HomeScreen() {
           activeOpacity={0.7}
         >
           <View style={[styles.actionIconContainer, { backgroundColor: '#3B82F6' }]}>
-            <Text style={styles.actionIcon}>👥</Text>
+            <FontAwesome name="users" size={18} color="#FFFFFF" />
           </View>
           <View style={styles.actionInfo}>
             <Text style={[styles.actionTitle, { color: colors.text }]}>Ver Lista de Alumnos</Text>
@@ -105,7 +110,7 @@ export default function HomeScreen() {
           activeOpacity={0.7}
         >
           <View style={[styles.actionIconContainer, { backgroundColor: '#10B981' }]}>
-            <Text style={styles.actionIcon}>➕</Text>
+            <FontAwesome name="user-plus" size={18} color="#FFFFFF" />
           </View>
           <View style={styles.actionInfo}>
             <Text style={[styles.actionTitle, { color: colors.text }]}>Registrar Nuevo Alumno</Text>
@@ -122,7 +127,7 @@ export default function HomeScreen() {
           activeOpacity={0.7}
         >
           <View style={[styles.actionIconContainer, { backgroundColor: '#F59E0B' }]}>
-            <Text style={styles.actionIcon}>🛒</Text>
+            <FontAwesome name="shopping-cart" size={18} color="#FFFFFF" />
           </View>
           <View style={styles.actionInfo}>
             <Text style={[styles.actionTitle, { color: colors.text }]}>Revisar Carrito de Inscripciones</Text>
@@ -139,7 +144,7 @@ export default function HomeScreen() {
           activeOpacity={0.7}
         >
           <View style={[styles.actionIconContainer, { backgroundColor: '#8B5CF6' }]}>
-            <Text style={styles.actionIcon}>👤</Text>
+            <FontAwesome name="user" size={18} color="#FFFFFF" />
           </View>
           <View style={styles.actionInfo}>
             <Text style={[styles.actionTitle, { color: colors.text }]}>Mi Perfil</Text>

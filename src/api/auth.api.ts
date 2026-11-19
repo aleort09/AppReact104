@@ -21,6 +21,11 @@ export interface LoginResponse {
 export interface RegisterRequest {
   email: string;
   password: string;
+  nombre?: string;
+  apellido_paterno?: string;
+  apellido_materno?: string;
+  matricula?: string;
+  rol_id?: number;
 }
 
 export interface RefreshTokenRequest {

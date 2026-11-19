@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';

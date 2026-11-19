@@ -6,6 +6,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet, ColorValue } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useCart } from '../../context/CartContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -52,8 +53,8 @@ export default function TabLayout() {
         options={{
           title: 'Inicio',
           tabBarLabel: 'Inicio',
-          tabBarIcon: ({ size }) => (
-            <TabIcon name="home" size={size} />
+          tabBarIcon: ({ size, color }) => (
+            <TabIcon name="home" size={size} color={color} />
           ),
         }}
       />
@@ -63,8 +64,8 @@ export default function TabLayout() {
         options={{
           title: 'Estudiantes',
           tabBarLabel: 'Estudiantes',
-          tabBarIcon: ({ size }) => (
-            <TabIcon name="people" size={size} />
+          tabBarIcon: ({ size, color }) => (
+            <TabIcon name="people" size={size} color={color} />
           ),
         }}
       />
@@ -74,8 +75,8 @@ export default function TabLayout() {
         options={{
           title: 'Carrito',
           tabBarLabel: 'Carrito',
-          tabBarIcon: ({ size }) => (
-            <TabIcon name="cart" size={size} />
+          tabBarIcon: ({ size, color }) => (
+            <TabIcon name="cart" size={size} color={color} />
           ),
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
           tabBarBadgeStyle: {
@@ -95,8 +96,8 @@ export default function TabLayout() {
         options={{
           title: 'Perfil',
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ size }) => (
-            <TabIcon name="person" size={size} />
+          tabBarIcon: ({ size, color }) => (
+            <TabIcon name="person" size={size} color={color} />
           ),
         }}
       />
@@ -106,8 +107,8 @@ export default function TabLayout() {
         options={{
           title: 'Ajustes',
           tabBarLabel: 'Ajustes',
-          tabBarIcon: ({ size }) => (
-            <TabIcon name="settings" size={size} />
+          tabBarIcon: ({ size, color }) => (
+            <TabIcon name="settings" size={size} color={color} />
           ),
         }}
       />
@@ -118,22 +119,21 @@ export default function TabLayout() {
 interface TabIconProps {
   name: 'home' | 'people' | 'cart' | 'person' | 'settings';
   size?: number;
+  color?: string;
 }
 
-function TabIcon({ name, size }: TabIconProps) {
-  const icons = {
-    home: '🏠',
-    people: '👥',
-    cart: '🛒',
-    person: '👤',
-    settings: '⚙️',
+function TabIcon({ name, size, color }: TabIconProps) {
+  const iconMap: Record<TabIconProps['name'], React.ComponentProps<typeof FontAwesome>['name']> = {
+    home: 'home',
+    people: 'users',
+    cart: 'shopping-cart',
+    person: 'user',
+    settings: 'cog',
   };
 
   return (
     <View style={styles.iconContainer}>
-      <Text style={[styles.iconText, { fontSize: size || 22 }]}>
-        {icons[name]}
-      </Text>
+      <FontAwesome name={iconMap[name]} size={size || 22} color={color || '#64748B'} />
     </View>
   );
 }
